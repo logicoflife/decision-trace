@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from typing import Any, Dict, Iterable, List, Optional, Union
 
 from .exporters.base import Exporter
-from .exporters.console import ConsoleExporter
+from .exporters.file import FileJsonlExporter
 from .ids import new_id
 from .model import Actor, DecisionTraceEvent, EventType
 from .time import now_rfc3339
@@ -40,7 +40,12 @@ class DecisionContext:
     def events(self) -> Iterable[DecisionTraceEvent]:
         return tuple(self._buffer)
 
-    def _emit(self, event_type: EventType, payload: Dict[str, Any]) -> DecisionTraceEvent:
+    def _emit(
+        self,
+        event_type: EventType,
+        payload: Dict[str, Any],
+        causal_links: Optional[List[Dict[str, Any]]] = None,
+    ) -> DecisionTraceEvent:
         event_dict = {
             "tenant_id": self._tenant_id,
             "environment": self._environment,
@@ -54,6 +59,8 @@ class DecisionContext:
             "actor": self._actor,
             "payload": payload,
         }
+        if causal_links is not None:
+            event_dict["causal_links"] = causal_links
         if self._validate:
             validate_event(event_dict)
         event = DecisionTraceEvent.model_validate(event_dict)
@@ -61,23 +68,33 @@ class DecisionContext:
         self._exporter.export(event)
         return event
 
-    def start(self) -> DecisionTraceEvent:
-        return self._emit(EventType.DECISION_START, {})
+    def start(self, causal_links: Optional[List[Dict[str, Any]]] = None) -> DecisionTraceEvent:
+        return self._emit(EventType.DECISION_START, {}, causal_links)
 
-    def evidence(self, payload: Dict[str, Any]) -> DecisionTraceEvent:
-        return self._emit(EventType.DECISION_EVIDENCE, payload)
+    def evidence(
+        self, payload: Dict[str, Any], causal_links: Optional[List[Dict[str, Any]]] = None
+    ) -> DecisionTraceEvent:
+        return self._emit(EventType.DECISION_EVIDENCE, payload, causal_links)
 
-    def policy_check(self, payload: Dict[str, Any]) -> DecisionTraceEvent:
-        return self._emit(EventType.DECISION_POLICY_CHECK, payload)
+    def policy_check(
+        self, payload: Dict[str, Any], causal_links: Optional[List[Dict[str, Any]]] = None
+    ) -> DecisionTraceEvent:
+        return self._emit(EventType.DECISION_POLICY_CHECK, payload, causal_links)
 
-    def action(self, payload: Dict[str, Any]) -> DecisionTraceEvent:
-        return self._emit(EventType.DECISION_ACTION, payload)
+    def action(
+        self, payload: Dict[str, Any], causal_links: Optional[List[Dict[str, Any]]] = None
+    ) -> DecisionTraceEvent:
+        return self._emit(EventType.DECISION_ACTION, payload, causal_links)
 
-    def outcome(self, payload: Dict[str, Any]) -> DecisionTraceEvent:
-        return self._emit(EventType.DECISION_OUTCOME, payload)
+    def outcome(
+        self, payload: Dict[str, Any], causal_links: Optional[List[Dict[str, Any]]] = None
+    ) -> DecisionTraceEvent:
+        return self._emit(EventType.DECISION_OUTCOME, payload, causal_links)
 
-    def error(self, payload: Dict[str, Any]) -> DecisionTraceEvent:
-        return self._emit(EventType.DECISION_ERROR, payload)
+    def error(
+        self, payload: Dict[str, Any], causal_links: Optional[List[Dict[str, Any]]] = None
+    ) -> DecisionTraceEvent:
+        return self._emit(EventType.DECISION_ERROR, payload, causal_links)
 
     def flush(self) -> None:
         self._exporter.flush()
@@ -112,7 +129,7 @@ def decision(
     exporter: Optional[Exporter] = None,
     validate: bool = False,
 ) -> Iterable[DecisionContext]:
-    active_exporter = exporter or ConsoleExporter()
+    active_exporter = exporter or FileJsonlExporter("./decision-trace.jsonl")
     ctx = DecisionContext(
         tenant_id=tenant_id,
         environment=environment,

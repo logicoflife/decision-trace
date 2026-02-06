@@ -1,6 +1,7 @@
 import pytest
 
 from decision_trace.model import ActorType, EventType
+from decision_trace.exporters.file import FileJsonlExporter
 from decision_trace.tracer import decision
 from decision_trace.validate import validate_event
 
@@ -84,14 +85,34 @@ def test_validate_bad_event_fails_with_message():
 
 
 def test_decision_validate_raises_on_invalid_actor():
+    exporter = RecordingExporter()
     with pytest.raises(ValueError) as excinfo:
         with decision(
             tenant_id="t1",
             environment="test",
             decision_type="risk_check",
             actor={"id": "u1", "type": "robot"},
+            exporter=exporter,
             validate=True,
         ):
             pass
 
     assert "actor.type" in str(excinfo.value)
+
+
+def test_file_exporter_writes_lines(tmp_path):
+    output_path = tmp_path / "events.jsonl"
+    exporter = FileJsonlExporter(str(output_path))
+
+    with decision(
+        tenant_id="t1",
+        environment="test",
+        decision_type="risk_check",
+        actor={"id": "u1", "type": ActorType.HUMAN},
+        exporter=exporter,
+    ):
+        pass
+
+    content = output_path.read_text(encoding="utf-8").strip().splitlines()
+    assert content
+    assert any("decision.start" in line for line in content)
