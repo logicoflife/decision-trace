@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "decision-trace"
+version = "0.1.0"
+description = "Decision Trace v1 SDK"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["pydantic>=2.0"]
+
+[project.optional-dependencies]
+test = ["pytest>=7.0"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["decision_trace*"]
