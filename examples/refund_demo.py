@@ -10,7 +10,8 @@ def main() -> None:
         decision_type="refund.classify",
         actor=actor,
     ) as classify:
-        classify.evidence({"ticket_id": "T-100", "amount": 42})
+        classify.evidence("ticket_id", "T-100")
+        classify.evidence("amount", 42)
         classify.policy_check({"policy": "refund_v1", "result": "pass"})
         classify.outcome({"classification": "eligible"})
 
@@ -24,7 +25,8 @@ def main() -> None:
         parent_decision_id=classify_id,
     ) as approve:
         approve.evidence(
-            {"reason": "classification: eligible"},
+            "classification",
+            "eligible",
             causal_links=[{"type": "uses_evidence_from", "target_decision_id": classify_id}],
         )
         approve.policy_check({"policy": "refund_v1", "result": "pass"})

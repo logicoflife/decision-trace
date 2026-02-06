@@ -1,9 +1,9 @@
 import pytest
 
-from decision_trace.model import ActorType, EventType
 from decision_trace.exporters.file import FileJsonlExporter
+from decision_trace.exporters.http import HttpExporter
+from decision_trace.model import ActorType, EventType
 from decision_trace.tracer import decision
-from decision_trace.validate import validate_event
 
 
 class RecordingExporter:
@@ -47,7 +47,23 @@ def test_exception_emits_error_event():
     assert any(event.event_type == EventType.DECISION_ERROR for event in exporter.events)
 
 
-def test_validate_good_event_passes():
+def test_sdk_emitted_events_validate():
+    exporter = RecordingExporter()
+    with decision(
+        tenant_id="t1",
+        environment="test",
+        decision_type="risk_check",
+        actor={"id": "u1", "type": ActorType.HUMAN},
+        exporter=exporter,
+        validate=True,
+    ) as ctx:
+        ctx.evidence("order_value", 120)
+        ctx.policy_check(policy="risk_v1", result="pass")
+        ctx.action({"action": "approve"})
+        ctx.outcome("approved")
+
+
+def test_envelope_fields_present():
     exporter = RecordingExporter()
     with decision(
         tenant_id="t1",
@@ -58,30 +74,54 @@ def test_validate_good_event_passes():
     ):
         pass
 
-    event_dict = exporter.events[0].model_dump(exclude_none=True)
-    event_dict["parent_decision_id"] = None
-    validate_event(event_dict)
+    required = {
+        "tenant_id",
+        "environment",
+        "schema_version",
+        "timestamp",
+        "trace_id",
+        "decision_id",
+        "parent_decision_id",
+        "event_id",
+        "event_type",
+        "decision_type",
+        "actor",
+        "payload",
+    }
+    event_dict = exporter.events[0].model_dump()
+    assert required.issubset(event_dict.keys())
 
 
-def test_validate_bad_event_fails_with_message():
+def test_payload_is_object_always():
     exporter = RecordingExporter()
     with decision(
         tenant_id="t1",
         environment="test",
         decision_type="risk_check",
-        actor={"id": "u1", "type": ActorType.SYSTEM},
+        actor={"id": "u1", "type": ActorType.HUMAN},
         exporter=exporter,
-    ):
-        pass
+    ) as ctx:
+        ctx.evidence("order_value", 120)
+        ctx.policy_check(policy="risk_v1", result="pass")
+        ctx.action({"action": "approve"})
+        ctx.outcome("approved")
 
-    bad_event = exporter.events[0].model_dump(exclude_none=True)
-    bad_event["parent_decision_id"] = None
-    bad_event["event_type"] = "decision.invalid"
+    assert all(isinstance(event.payload, dict) for event in exporter.events)
 
-    with pytest.raises(ValueError) as excinfo:
-        validate_event(bad_event)
 
-    assert "event_type" in str(excinfo.value)
+def test_http_exporter_unreachable_error_is_clean():
+    exporter = HttpExporter("http://127.0.0.1:1")
+    with pytest.raises(RuntimeError) as excinfo:
+        with decision(
+            tenant_id="t1",
+            environment="test",
+            decision_type="risk_check",
+            actor={"id": "u1", "type": ActorType.HUMAN},
+            exporter=exporter,
+        ):
+            pass
+
+    assert str(excinfo.value) == "Collector unreachable at http://127.0.0.1:1. Is it running?"
 
 
 def test_decision_validate_raises_on_invalid_actor():

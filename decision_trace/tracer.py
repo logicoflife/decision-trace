@@ -9,6 +9,7 @@ from .ids import new_id
 from .model import Actor, DecisionTraceEvent, EventType
 from .time import now_rfc3339
 from .validate import validate_event
+from .version import SCHEMA_VERSION
 
 
 class DecisionContext:
@@ -40,27 +41,33 @@ class DecisionContext:
     def events(self) -> Iterable[DecisionTraceEvent]:
         return tuple(self._buffer)
 
-    def _emit(
+    def build_event(
         self,
-        event_type: EventType,
+        event_type: str,
         payload: Dict[str, Any],
-        causal_links: Optional[List[Dict[str, Any]]] = None,
-    ) -> DecisionTraceEvent:
+        causal_links_override: Optional[List[Dict[str, Any]]] = None,
+    ) -> Dict[str, Any]:
+        if not isinstance(payload, dict):
+            raise ValueError("payload must be a dict")
         event_dict = {
             "tenant_id": self._tenant_id,
             "environment": self._environment,
+            "schema_version": SCHEMA_VERSION,
             "timestamp": now_rfc3339(),
             "trace_id": self._trace_id,
             "decision_id": self._decision_id,
             "parent_decision_id": self._parent_decision_id,
             "event_id": new_id(),
-            "event_type": event_type.value,
+            "event_type": event_type,
             "decision_type": self._decision_type,
             "actor": self._actor,
             "payload": payload,
         }
-        if causal_links is not None:
-            event_dict["causal_links"] = causal_links
+        if causal_links_override is not None:
+            event_dict["causal_links"] = causal_links_override
+        return event_dict
+
+    def _record(self, event_dict: Dict[str, Any]) -> DecisionTraceEvent:
         if self._validate:
             validate_event(event_dict)
         event = DecisionTraceEvent.model_validate(event_dict)
@@ -69,34 +76,63 @@ class DecisionContext:
         return event
 
     def start(self, causal_links: Optional[List[Dict[str, Any]]] = None) -> DecisionTraceEvent:
-        return self._emit(EventType.DECISION_START, {}, causal_links)
+        event_dict = self.build_event(EventType.DECISION_START.value, {}, causal_links)
+        return self._record(event_dict)
 
     def evidence(
-        self, payload: Dict[str, Any], causal_links: Optional[List[Dict[str, Any]]] = None
+        self, key: str, value: Any, causal_links: Optional[List[Dict[str, Any]]] = None
     ) -> DecisionTraceEvent:
-        return self._emit(EventType.DECISION_EVIDENCE, payload, causal_links)
+        payload = {"key": key, "value": value}
+        event_dict = self.build_event(EventType.DECISION_EVIDENCE.value, payload, causal_links)
+        return self._record(event_dict)
 
     def policy_check(
-        self, payload: Dict[str, Any], causal_links: Optional[List[Dict[str, Any]]] = None
+        self,
+        policy: str,
+        result: str,
+        inputs: Optional[Dict[str, Any]] = None,
+        causal_links: Optional[List[Dict[str, Any]]] = None,
     ) -> DecisionTraceEvent:
-        return self._emit(EventType.DECISION_POLICY_CHECK, payload, causal_links)
+        payload: Dict[str, Any] = {"policy": policy, "result": result}
+        if inputs:
+            payload["inputs"] = inputs
+        event_dict = self.build_event(EventType.DECISION_POLICY_CHECK.value, payload, causal_links)
+        return self._record(event_dict)
 
     def action(
         self, payload: Dict[str, Any], causal_links: Optional[List[Dict[str, Any]]] = None
     ) -> DecisionTraceEvent:
-        return self._emit(EventType.DECISION_ACTION, payload, causal_links)
+        event_dict = self.build_event(EventType.DECISION_ACTION.value, payload, causal_links)
+        return self._record(event_dict)
 
-    def outcome(
+    def approval(
         self, payload: Dict[str, Any], causal_links: Optional[List[Dict[str, Any]]] = None
     ) -> DecisionTraceEvent:
-        return self._emit(EventType.DECISION_OUTCOME, payload, causal_links)
+        event_dict = self.build_event(EventType.DECISION_APPROVAL.value, payload, causal_links)
+        return self._record(event_dict)
+
+    def outcome(
+        self, status: str, causal_links: Optional[List[Dict[str, Any]]] = None
+    ) -> DecisionTraceEvent:
+        payload = {"status": status}
+        event_dict = self.build_event(EventType.DECISION_OUTCOME.value, payload, causal_links)
+        return self._record(event_dict)
 
     def error(
         self, payload: Dict[str, Any], causal_links: Optional[List[Dict[str, Any]]] = None
     ) -> DecisionTraceEvent:
-        return self._emit(EventType.DECISION_ERROR, payload, causal_links)
+        event_dict = self.build_event(EventType.DECISION_ERROR.value, payload, causal_links)
+        return self._record(event_dict)
+
+    def evaluation(
+        self, payload: Dict[str, Any], causal_links: Optional[List[Dict[str, Any]]] = None
+    ) -> DecisionTraceEvent:
+        event_dict = self.build_event(EventType.DECISION_EVALUATION.value, payload, causal_links)
+        return self._record(event_dict)
 
     def flush(self) -> None:
+        if not self._buffer:
+            return
         self._exporter.flush()
 
     @staticmethod
