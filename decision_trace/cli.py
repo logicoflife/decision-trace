@@ -93,7 +93,39 @@ def print_tree(
         )
 
 
+from .storage import EventIndex
+
+def cmd_index(args: argparse.Namespace) -> None:
+    # Resolve file
+    jsonl_path = Path(args.file) if args.file else None
+    
+    if not jsonl_path:
+        for p in [Path("./decision-trace.jsonl"), Path("./data/events.jsonl")]:
+            if p.exists():
+                jsonl_path = p
+                break
+                
+    db_path = Path(args.db)
+    
+    if not jsonl_path or not jsonl_path.exists():
+        print(f"{RED}Error: No events file found to index.{RESET}")
+        sys.exit(1)
+        
+    print(f"Indexing {jsonl_path} -> {db_path} ...")
+    
+    try:
+        with EventIndex(db_path) as idx:
+            count = idx.index_file(jsonl_path)
+            print(f"{GREEN}Indexed {count} events.{RESET}")
+    except Exception as e:
+        print(f"{RED}Error indexing: {e}{RESET}")
+        sys.exit(1)
+
+
 def cmd_inspect(args: argparse.Namespace) -> None:
+    db_path = Path(args.db)
+    
+    # Determine which files to check
     candidate_files = []
     if args.file:
         candidate_files.append(Path(args.file))
@@ -105,40 +137,53 @@ def cmd_inspect(args: argparse.Namespace) -> None:
 
     found_events = []
     source_file = None
-    target_trace_id = args.trace_id
-
-    for path in candidate_files:
-        if not path.exists():
+    
+    for jsonl_path in candidate_files:
+        if not jsonl_path.exists():
             continue
+            
+        # 1. Try index if available
+        if db_path.exists():
+            try:
+                with EventIndex(db_path) as idx:
+                    # Note: We assume the index tracks offsets valid for this file.
+                    # In a real system, we'd check if the index matches the file signature.
+                    # primarily this works if the user indexed THIS file.
+                    found_events = idx.get_trace_events(args.trace_id, jsonl_path)
+            except Exception:
+                pass
         
-        current_events = []
+        if found_events:
+            source_file = jsonl_path
+            break
+            
+        # 2. Fallback to linear scan
         try:
-            with path.open("r", encoding="utf-8") as f:
+            with jsonl_path.open("r", encoding="utf-8") as f:
                 for line in f:
                     if not line.strip():
                         continue
                     try:
                         event = json.loads(line)
-                        if event.get("trace_id") == target_trace_id:
-                            current_events.append(event)
+                        if event.get("trace_id") == args.trace_id:
+                            found_events.append(event)
                     except json.JSONDecodeError:
                         continue
         except Exception:
-            continue
+            pass
             
-        if current_events:
-            found_events = current_events
-            source_file = path
+        if found_events:
+            source_file = jsonl_path
             break
 
     if not found_events:
         checked = ", ".join(str(p) for p in candidate_files)
-        print(f"No events found for trace_id: {target_trace_id}")
+        print(f"No events found for trace_id: {args.trace_id}")
         if not args.file:
              print(f"Checked: {checked}")
         return
 
-    print(f"Trace: {GREEN}{target_trace_id}{RESET}")
+    print(f"Trace: {GREEN}{args.trace_id}{RESET}")
     print(f"File:  {source_file}")
     print(f"Events: {len(found_events)}")
     print("-" * 40)
@@ -152,8 +197,6 @@ def cmd_inspect(args: argparse.Namespace) -> None:
     }
 
     # Find root(s) - nodes with no parent in this trace context
-    # Note: A trace might be a subgraph. A root in this view is one where 
-    # parent_decision_id is None OR parent_decision_id is not in our loaded events.
     
     roots = []
     for d_id, e in start_events.items():
@@ -179,14 +222,33 @@ def main() -> None:
     inspect_parser.add_argument(
         "-f", "--file", 
         default=None,
-        help="Path to JSONL file (default: searches ./decision-trace.jsonl, ./data/events.jsonl)"
+        help="Path to JSONL file (default: auto-discover)"
     )
     inspect_parser.add_argument(
         "-v", "--verbose",
         action="store_true",
         help="Show detailed event information"
     )
+    inspect_parser.add_argument(
+        "--db",
+        default="./decision-trace.db",
+        help="Path to SQLite index (default: ./decision-trace.db)"
+    )
     inspect_parser.set_defaults(func=cmd_inspect)
+
+    # index
+    index_parser = subparsers.add_parser("index", help="Create an index for faster lookups")
+    index_parser.add_argument(
+        "-f", "--file",
+        required=False,
+        help="Path to JSONL file to index"
+    )
+    index_parser.add_argument(
+        "--db",
+        default="./decision-trace.db",
+        help="Path to SQLite index (default: ./decision-trace.db)"
+    )
+    index_parser.set_defaults(func=cmd_index)
 
     # version
     version_parser = subparsers.add_parser("version", help="Show version")

@@ -16,6 +16,7 @@ collector = ["fastapi>=0.110", "uvicorn>=0.23"]
 
 [project.scripts]
 decision-trace = "decision_trace.cli:main"
+decision-trace-collector = "decision_trace_collector.main:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
