@@ -3,3 +3,6 @@ __pycache__/
 *.pyc
 *.egg-info/
 decision-trace.jsonl
+AGENT.md
+BUILD_LOG.md
+data/

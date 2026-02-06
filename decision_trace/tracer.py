@@ -41,6 +41,14 @@ class DecisionContext:
     def events(self) -> Iterable[DecisionTraceEvent]:
         return tuple(self._buffer)
 
+    @property
+    def decision_id(self) -> str:
+        return self._decision_id
+
+    @property
+    def trace_id(self) -> str:
+        return self._trace_id
+
     def build_event(
         self,
         event_type: str,

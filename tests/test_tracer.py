@@ -156,3 +156,29 @@ def test_file_exporter_writes_lines(tmp_path):
     content = output_path.read_text(encoding="utf-8").strip().splitlines()
     assert content
     assert any("decision.start" in line for line in content)
+
+
+def test_public_id_properties():
+    exporter = RecordingExporter()
+    with decision(
+        tenant_id="t1",
+        environment="test",
+        decision_type="id_check",
+        actor={"id": "u1", "type": ActorType.HUMAN},
+        exporter=exporter,
+    ) as ctx:
+        assert isinstance(ctx.decision_id, str)
+        assert ctx.decision_id
+        assert isinstance(ctx.trace_id, str)
+        assert ctx.trace_id
+        
+        # Verify ids match events
+        assert ctx.decision_id == exporter.events[0].decision_id
+        assert ctx.trace_id == exporter.events[0].trace_id
+
+        # Verify read-only
+        with pytest.raises(AttributeError):
+            ctx.decision_id = "foo"
+        with pytest.raises(AttributeError):
+            ctx.trace_id = "bar"
+
