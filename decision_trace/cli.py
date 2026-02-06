@@ -208,6 +208,61 @@ def cmd_inspect(args: argparse.Namespace) -> None:
         print_tree(start_events, root["decision_id"], verbose=args.verbose, all_events=found_events)
 
 
+from .linter import ContractValidator
+
+def cmd_lint_contract(args: argparse.Namespace) -> None:
+    contract_path = Path(args.contract)
+    if not contract_path.exists():
+        print(f"{RED}Error: Contract file {contract_path} not found.{RESET}")
+        sys.exit(1)
+        
+    try:
+        validator = ContractValidator(contract_path)
+    except Exception as e:
+        print(f"{RED}Error loading contract: {e}{RESET}")
+        sys.exit(1)
+        
+    # Resolve events file
+    jsonl_path = Path(args.file) if args.file else None
+    
+    if not jsonl_path:
+        for p in [Path("./decision-trace.jsonl"), Path("./data/events.jsonl")]:
+            if p.exists():
+                jsonl_path = p
+                break
+                
+    if not jsonl_path or not jsonl_path.exists():
+        print(f"{RED}Error: No events file found.{RESET}")
+        sys.exit(1)
+        
+    print(f"Linting {jsonl_path} against {contract_path} ...")
+    
+    events = []
+    try:
+        with jsonl_path.open("r", encoding="utf-8") as f:
+            for line in f:
+                if line.strip():
+                    try:
+                        events.append(json.loads(line))
+                    except json.JSONDecodeError:
+                        pass
+    except Exception as e:
+        print(f"{RED}Error reading events: {e}{RESET}")
+        sys.exit(1)
+        
+    violations = validator.validate_stream(events)
+    
+    if violations:
+        print(f"{RED}Found {len(violations)} violations:{RESET}")
+        for v in violations:
+            print(f"  {v}")
+        # Warn-only for V1, or exit? 
+        # BUILD_LOG says: "Warn-only mode in v1."
+        print(f"{RED}Lint failed (Warn-only).{RESET}")
+    else:
+        print(f"{GREEN}No violations found. Contract satisfied.{RESET}")
+
+
 def cmd_version(args: argparse.Namespace) -> None:
     print(f"Decision Trace v{SCHEMA_VERSION}")
 
@@ -249,6 +304,16 @@ def main() -> None:
         help="Path to SQLite index (default: ./decision-trace.db)"
     )
     index_parser.set_defaults(func=cmd_index)
+    
+    # lint-contract
+    lint_parser = subparsers.add_parser("lint-contract", help="Validate events against a contract")
+    lint_parser.add_argument("contract", help="Path to contract.yaml")
+    lint_parser.add_argument(
+        "-f", "--file",
+        required=False,
+        help="Path to JSONL file to lint"
+    )
+    lint_parser.set_defaults(func=cmd_lint_contract)
 
     # version
     version_parser = subparsers.add_parser("version", help="Show version")
