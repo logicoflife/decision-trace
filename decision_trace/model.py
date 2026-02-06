@@ -26,17 +26,24 @@ class ActorType(str, Enum):
 class Actor(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    actor_id: str
-    actor_type: ActorType
-    display_name: Optional[str] = None
+    id: str
+    type: ActorType
+    version: Optional[str] = None
+    org: Optional[str] = None
+
+
+class CausalLinkType(str, Enum):
+    DEPENDS_ON = "depends_on"
+    TRIGGERED_BY = "triggered_by"
+    USES_EVIDENCE_FROM = "uses_evidence_from"
+    COMPENSATES = "compensates"
 
 
 class CausalLink(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    from_decision_id: str
-    to_decision_id: str
-    relation: Optional[str] = None
+    type: CausalLinkType
+    target_decision_id: str
 
 
 class DecisionTraceEvent(BaseModel):

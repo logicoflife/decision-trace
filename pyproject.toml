@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Decision Trace v1 SDK"
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = ["pydantic>=2.0"]
+dependencies = ["pydantic>=2.0", "jsonschema>=4.0"]
 
 [project.optional-dependencies]
 test = ["pytest>=7.0"]
