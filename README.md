@@ -1,7 +1,7 @@
 
 # Decision Trace SDK (Python)
 
-**Open Standard for Agentic Decisions.**
+**Open Standard for Decision Telemetry.**
 
 Decision Trace is an append-only ledger for recording the *reasoning* of systems. It captures decisions, evidence, policy checks, and outcomes in a structured, queryable graph.
 
