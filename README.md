@@ -95,7 +95,16 @@ See [**Architecture**](docs/architecture.md) for deep dive.
 
 ---
 
-## 🤝 Contributing & License
+## 🤝 Contributing, Attribution & License
+
+### Attribution
+
+If you build on this framework or create a derivative project, we ask that you credit the original repository. Attribution helps sustain open-source work and signals respect for shared infrastructure.
+
+### Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+### License
+
 Licensed under MIT.
