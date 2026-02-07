@@ -3,7 +3,16 @@
 
 ## What is a Decision?
 
-A **Decision** is a discrete unit of agent reasoning. Unlike a log line (which says *what happened*) or a trace span (which says *how long it took*), a Decision captures *why* something happened.
+A **Decision** is a discrete unit of system reasoning. Unlike a log line (which says *what happened*) or a trace span (which says *how long it took*), a Decision captures *why* something happened.
+
+Decisions occur in:
+
+- AI agents
+- payment authorization flows
+- fraud and risk engines
+- approval workflows
+- compliance systems
+- underwriting and policy engines
 
 It is a structured event containing:
 1.  **Context**: Who made the decision (Actor) and where (Decision Type).

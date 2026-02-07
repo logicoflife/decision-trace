@@ -12,7 +12,7 @@ The fundamental storage model is an **Append-Only Ledger**.
 
 ## 2. Schema-First Philosophy
 
-Data quality is paramount for AI evaluation.
+Data quality is paramount for decision analysis and auditing.
 - All events are validated against a strict schema (Pydantic models) at the edge.
 - **Actors** must have defined types (`system`, `human`, `agent`).
 - **Outcomes** are structured.

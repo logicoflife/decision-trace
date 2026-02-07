@@ -3,7 +3,7 @@
 
 **Open Standard for Agentic Decisions.**
 
-Decision Trace is an append-only ledger for recording the *reasoning* of AI Agents. It captures decisions, evidence, policy checks, and outcomes in a structured, queryable graph.
+Decision Trace is an append-only ledger for recording the *reasoning* of systems. It captures decisions, evidence, policy checks, and outcomes in a structured, queryable graph.
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Safety](https://img.shields.io/badge/safety-hardened-green.svg)](docs/safety.md)
@@ -41,13 +41,16 @@ decision-trace inspect --last --verbose
 
 ## 🧠 What is a Decision?
 
-A **Decision** is a unit of reasoning. Unlike a log (what happened) or a trace (how long), a Decision captures **why**.
+A **Decision** is a unit of reasoning. Unlike a log (what happened) or a trace (how long), a Decision captures **why**. It is a is a semantic unit of business logic.
 
-It structures your agent's execution into a graph of:
+It captures:
 1.  **Context**: Who is acting? (Human, Agent, System)
 2.  **Evidence**: What data was used?
 3.  **Logic**: What policies were checked?
 4.  **Outcome**: What was the result?
+
+Decisions exist in AI agents, but also in traditional APIs, services,
+risk engines, approval systems, and compliance pipelines.
 
 See [**Core Concepts**](docs/concepts.md) for more.
 
@@ -56,7 +59,7 @@ See [**Core Concepts**](docs/concepts.md) for more.
 ## 🎯 When to Use Decision Trace
 
 Use Decision Trace when you need to answer:
-- *Why did the agent invoke this tool?*
+- *Why did the system invoke this tool?*
 - *Which policy blocked this user?*
 - *Did a human review this approval?*
 
