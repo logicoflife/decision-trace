@@ -1,101 +1,98 @@
-# Decision Trace
 
-**Decision Trace** is a semantic tracing framework for AI agents and automated decision systems. It provides an append-only, immutable record of *why* a system did what it did, structured as a causal graph of decisions.
+# Decision Trace SDK (Python)
 
-> **Status**: v1.0 (Beta)
+**Open Standard for Agentic Decisions.**
 
-## Features
+Decision Trace is an append-only ledger for recording the *reasoning* of AI Agents. It captures decisions, evidence, policy checks, and outcomes in a structured, queryable graph.
 
-- **Semantic Events**: Specific event types for `evidence`, `policy_check`, `outcome`, etc.
-- **Causal Graph**: Auto-links decisions into a DAG (Decision A -> caused -> Decision B).
-- **Zero-Infrastructure**: Defaults to local `jsonl` files. No database required.
-- **CLI Inspector**: Visualize traces in the terminal with `decision-trace inspect`.
-- **Contract Linting**: Enforce organization-wide schemas with `contract.yaml`.
-- **OpenTelemetry Bridge**: Seamlessly export decision traces as OTel spans.
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Safety](https://img.shields.io/badge/safety-hardened-green.svg)](docs/safety.md)
 
-## Installation
+---
 
+## ⚡️ 5-Minute Quickstart
+
+### 1. Install
 ```bash
-pip install decision-trace
+pip install decision-trace[collector]
 ```
 
-## Quickstart
+### 2. Start Local Dev Collector
+```bash
+decision-trace dev
+```
 
+### 3. Run a Trace
 ```python
 from decision_trace import decision
 
-# Record a decision
-with decision(
-    decision_type="loan.origination.v1",
-    actor={"type": "system", "id": "risk-engine"},
-    tenant_id="acme",
-    environment="prod",
-) as ctx:
-    ctx.evidence("credit_score", 720)
-    ctx.policy_check("min_score_600", "pass")
-    ctx.outcome("approved")
-
-print(f"Recorded Trace ID: {ctx.trace_id}")
+with decision("loan.approval", actor={"type": "system", "id": "risk_engine"}) as d:
+    d.evidence("credit_score", 720)
+    d.policy_check("min_score_700", "pass")
+    d.outcome("approved")
 ```
 
-This writes to `./decision-trace.jsonl` by default.
-
-## CLI Usage
-
-### Inspect a Trace
-Visualize the decision tree in your terminal:
-
+### 4. Inspect
 ```bash
-decision-trace inspect <trace_id> --verbose
+decision-trace inspect --last --verbose
 ```
 
-### Build an Index
-For large files, create a SQLite index for O(1) lookups:
+---
 
-```bash
-decision-trace index -f data/events.jsonl
-```
+## 🧠 What is a Decision?
 
-### Lint Contracts
-Ensure your application emits valid event types:
+A **Decision** is a unit of reasoning. Unlike a log (what happened) or a trace (how long), a Decision captures **why**.
 
-```bash
-decision-trace lint-contract contract.yaml
-```
+It structures your agent's execution into a graph of:
+1.  **Context**: Who is acting? (Human, Agent, System)
+2.  **Evidence**: What data was used?
+3.  **Logic**: What policies were checked?
+4.  **Outcome**: What was the result?
 
-**Example `contract.yaml`**:
-```yaml
-decisions:
-  - type: loan.origination.v1
-actors:
-  - type: system
-```
+See [**Core Concepts**](docs/concepts.md) for more.
 
-## Comparisons
+---
 
-| Feature | Conventional Logging | File-Based Tracing | Decision Trace |
-| :--- | :--- | :--- | :--- |
-| **Structure** | Unstructured text | Spans (Timing focus) | Semantic Graph (Logic focus) |
-| **Linking** | Manual correlation IDs | Parent/Child Spans | Explicit Causal Links |
-| **Schema** | None / Loose | OTel SemConv | Enforced Event Types |
-| **Use Case** | Debugging errors | Performance / Latency | Audit / Safety / Explainability |
+## 🎯 When to Use Decision Trace
 
-## OpenTelemetry Integration
+Use Decision Trace when you need to answer:
+- *Why did the agent invoke this tool?*
+- *Which policy blocked this user?*
+- *Did a human review this approval?*
 
-Bridge Decision Trace events to your observability stack (Jaeger, Honeycomb, etc.):
+It is designed for:
+- **Agent Governance**: tracking tool usage and reasoning.
+- **Human-in-the-Loop**: linking AI proposals to human approvals.
+- **Policy Enforcement**: proving compliance with business rules.
 
-```python
-from opentelemetry import trace
-from decision_trace.exporters.otel import OTelExporter
+---
 
-# Use your existing OTel tracer
-exporter = OTelExporter(tracer=trace.get_tracer(__name__))
+## 🏗 Architecture Principles
 
-with decision(..., exporter=exporter) as ctx:
-    ctx.outcome("approved")
-```
+- **Append-Only Ledger**: History is immutable.
+- **Schema-First**: All events are validated against a strict schema.
+- **Failure Isolation**: Tracing failures never crash your app.
 
-## Contributing
+See [**Architecture**](docs/architecture.md) for deep dive.
 
-1. Install dev dependencies: `pip install -e ".[test,collector]"`
-2. Run tests: `pytest`
+---
+
+## 📚 Documentation
+
+- [**Core Concepts**](docs/concepts.md) - Logs vs Decisions, The DAG.
+- [**Architecture**](docs/architecture.md) - Ledger, Collector, Principles.
+- [**Safety & Privacy**](docs/safety.md) - Evidence integrity, PII redaction.
+- [**Migration Guide**](docs/migration.md) - Integrating with existing logging.
+
+### Examples
+
+- **[Refund Workflow](examples/refund_workflow/)**: Classify → Approve → Execute DAG.
+- **[Agent Chain](examples/agent_approval_chain/)**: AI Proposal → Human Review.
+- **[Policy Failure](examples/policy_failure_and_evaluation/)**: Recording denials.
+
+---
+
+## 🤝 Contributing & License
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+Licensed under MIT.

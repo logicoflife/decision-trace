@@ -6,7 +6,7 @@ from jsonschema import Draft7Validator
 
 
 def load_event_schema() -> Dict[str, Any]:
-    schema_rel = Path("spec/schema/decision-trace-event-1.0.json")
+    schema_rel = Path("docs/spec/schema/decision-trace-event-1.0.json")
     schema_path = None
     for parent in Path(__file__).resolve().parents:
         candidate = parent / schema_rel

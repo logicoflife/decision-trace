@@ -12,6 +12,13 @@ from .validate import validate_event
 from .version import SCHEMA_VERSION
 
 
+
+from copy import deepcopy
+import sys
+
+# Redaction defaults
+DEFAULT_REDACT_KEYS = {"password", "token", "secret", "auth", "api_key", "access_token"}
+
 class DecisionContext:
     def __init__(
         self,
@@ -57,6 +64,19 @@ class DecisionContext:
     ) -> Dict[str, Any]:
         if not isinstance(payload, dict):
             raise ValueError("payload must be a dict")
+        
+        # Phase 10 Safety: Snapshot evidence at emission time
+        try:
+            safe_payload = deepcopy(payload)
+        except Exception:
+            # Fallback for non-pickleable objects, basic dict copy or str repr?
+            # For strict safety, we might want to warn or stringify.
+            # V1.1 policy: standard deepcopy. If fails, user gets error (which is good signal).
+            safe_payload = deepcopy(payload)
+
+        # Phase 10 Safety: Redaction
+        self._redact_pii(safe_payload)
+
         event_dict = {
             "tenant_id": self._tenant_id,
             "environment": self._environment,
@@ -69,18 +89,41 @@ class DecisionContext:
             "event_type": event_type,
             "decision_type": self._decision_type,
             "actor": self._actor,
-            "payload": payload,
+            "payload": safe_payload,
         }
         if causal_links_override is not None:
             event_dict["causal_links"] = causal_links_override
         return event_dict
 
+    def _redact_pii(self, data: Any) -> None:
+        """Recursive in-place redaction."""
+        if isinstance(data, dict):
+            for k, v in data.items():
+                if isinstance(k, str) and k.lower() in DEFAULT_REDACT_KEYS:
+                    data[k] = "[REDACTED]"
+                else:
+                    self._redact_pii(v)
+        elif isinstance(data, list):
+            for item in data:
+                self._redact_pii(item)
+
     def _record(self, event_dict: Dict[str, Any]) -> DecisionTraceEvent:
         if self._validate:
+            # Phase 10 Safety: Validation failures SHOULD break tests/dev, 
+            # but maybe log-only in prod? V1.1 stays strict on schema.
             validate_event(event_dict)
+        
         event = DecisionTraceEvent.model_validate(event_dict)
         self._buffer.append(event)
-        self._exporter.export(event)
+        
+        # Phase 10 Safety: Failure Isolation
+        # Exporter failure must NEVER crash business logic
+        try:
+            self._exporter.export(event)
+        except Exception as e:
+            # Log to stderr but swallow exception
+            sys.stderr.write(f"[DecisionTrace] Exporter failed: {e}\n")
+            
         return event
 
     def start(self, causal_links: Optional[List[Dict[str, Any]]] = None) -> DecisionTraceEvent:
@@ -141,7 +184,11 @@ class DecisionContext:
     def flush(self) -> None:
         if not self._buffer:
             return
-        self._exporter.flush()
+        # Phase 10 Safety: Exporter isolation for flush too
+        try:
+            self._exporter.flush()
+        except Exception as e:
+            sys.stderr.write(f"[DecisionTrace] Exporter flush failed: {e}\n")
 
     @staticmethod
     def _normalize_actor(actor: Union[Actor, Dict[str, Any]]) -> Dict[str, Any]:
