@@ -1,5 +1,5 @@
 
-# Decision Trace SDK (Python)
+# Decision Trace™
 
 **Open Standard for Decision Telemetry.**
 
@@ -108,3 +108,13 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 ### License
 
 Licensed under MIT.
+
+---
+### Trademarks
+Decision Trace™ is a common law trademark of Shobha Sethuraman / logicoflife. 
+
+Initial Development: February 5, 2026
+
+Public Release: February 7, 2026
+
+Whitepaper Publication: February 9, 2026
