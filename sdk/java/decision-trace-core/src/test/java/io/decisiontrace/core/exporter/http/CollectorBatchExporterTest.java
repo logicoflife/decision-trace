@@ -45,6 +45,25 @@ class CollectorBatchExporterTest {
     }
 
     @Test
+    void batchPayloadMatchesCollectorIngestionShape() {
+        RecordingSender sender = new RecordingSender();
+        CollectorBatchExporter exporter = new CollectorBatchExporter(sender, 2);
+
+        exporter.export(sampleEvent("event-1"));
+        exporter.export(sampleEvent("event-2"));
+
+        String payload = sender.payloads.get(0);
+        assertTrue(payload.startsWith("["));
+        assertTrue(payload.endsWith("]"));
+        assertTrue(payload.contains("\"tenant_id\":\"tenant-a\""));
+        assertTrue(payload.contains("\"environment\":\"test\""));
+        assertTrue(payload.contains("\"schema_version\":\"1.0\""));
+        assertTrue(payload.contains("\"event_type\":\"decision.start\""));
+        assertTrue(payload.contains("\"actor\":{\"id\":\"risk-engine\",\"type\":\"system\"}"));
+        assertTrue(payload.contains("\"payload\":{\"status\":\"ok\"}"));
+    }
+
+    @Test
     void failedFlushLeavesBatchPendingForRetry() {
         RecordingSender sender = new RecordingSender();
         sender.failuresRemaining = 1;

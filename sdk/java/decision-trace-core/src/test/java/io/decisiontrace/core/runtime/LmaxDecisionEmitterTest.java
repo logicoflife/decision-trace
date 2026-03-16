@@ -31,8 +31,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import org.junit.jupiter.api.Test;
 
 class LmaxDecisionEmitterTest {
@@ -196,6 +199,77 @@ class LmaxDecisionEmitterTest {
 
         assertTrue(metrics.droppedEvents() > 0);
         assertTrue(exports.get() >= 1);
+    }
+
+    @Test
+    void concurrentPublishersPreserveNonBlockingCaptureAndFanOut() throws Exception {
+        DecisionRuntimeMetrics metrics = new DecisionRuntimeMetrics();
+        AtomicInteger exporterA = new AtomicInteger();
+        AtomicInteger exporterB = new AtomicInteger();
+        LmaxDecisionEmitter emitter = new LmaxDecisionEmitter(
+                1024,
+                new DecisionDispatcher(List.of(
+                        event -> exporterA.incrementAndGet(),
+                        event -> exporterB.incrementAndGet()),
+                        metrics),
+                metrics);
+        int threads = 8;
+        int eventsPerThread = 200;
+        ExecutorService executor = Executors.newFixedThreadPool(threads);
+        try {
+            CountDownLatch done = new CountDownLatch(threads);
+            for (int thread = 0; thread < threads; thread++) {
+                int threadId = thread;
+                executor.submit(() -> {
+                    try {
+                        for (int i = 0; i < eventsPerThread; i++) {
+                            emitter.emit(sampleEvent("concurrent-" + threadId + "-" + i));
+                        }
+                    } finally {
+                        done.countDown();
+                    }
+                });
+            }
+            assertTrue(done.await(5, TimeUnit.SECONDS));
+            emitter.flush();
+        } finally {
+            executor.shutdownNow();
+            emitter.close();
+        }
+
+        int expected = threads * eventsPerThread;
+        assertEquals(expected, exporterA.get());
+        assertEquals(expected, exporterB.get());
+        assertEquals(0, metrics.droppedEvents());
+    }
+
+    @Test
+    void exporterFanOutFailureDoesNotPreventOtherExportersUnderLoad() throws Exception {
+        DecisionRuntimeMetrics metrics = new DecisionRuntimeMetrics();
+        AtomicInteger healthyExports = new AtomicInteger();
+        AtomicLong brokenCalls = new AtomicLong();
+        LmaxDecisionEmitter emitter = new LmaxDecisionEmitter(
+                256,
+                new DecisionDispatcher(List.of(
+                        event -> {
+                            brokenCalls.incrementAndGet();
+                            throw new IllegalStateException("boom");
+                        },
+                        event -> healthyExports.incrementAndGet()),
+                        metrics),
+                metrics);
+        try {
+            for (int i = 0; i < 250; i++) {
+                emitter.emit(sampleEvent("fanout-" + i));
+            }
+            emitter.flush();
+        } finally {
+            emitter.close();
+        }
+
+        assertEquals(250, healthyExports.get());
+        assertEquals(250, brokenCalls.get());
+        assertTrue(metrics.exporterFailures() >= 250);
     }
 
     private static DecisionTraceEvent sampleEvent(String eventId) {
