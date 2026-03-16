@@ -1,7 +1,8 @@
 
 # Decision Trace™
-
 **Open Standard for Decision Telemetry.**
+
+[![docs DeepWiki](https://img.shields.io/badge/docs-DeepWiki-blue)](https://deepwiki.com/logicoflife/decision-trace)
 
 The project is actively evolving with new SDKs and integrations. Core telemetry concepts and event contracts are considered stable.
 
