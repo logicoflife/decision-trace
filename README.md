@@ -12,17 +12,12 @@ Decision Trace is an append-only ledger for recording the *reasoning* of systems
 
 ## ⚡️ 5-Minute Quickstart
 
-### 1. Install
+### Python SDK
 ```bash
 pip install decision-trace[collector]
-```
-
-### 2. Start Local Dev Collector
-```bash
 decision-trace dev
 ```
 
-### 3. Run a Trace
 ```python
 from decision_trace import decision
 
@@ -32,9 +27,33 @@ with decision("loan.approval", actor={"type": "system", "id": "risk_engine"}) as
     d.outcome("approved")
 ```
 
-### 4. Inspect
-```bash
-decision-trace inspect --last --verbose
+### Java SDK
+Add the Spring Boot starter and point it at a collector:
+
+```xml
+<dependency>
+    <groupId>io.decisiontrace</groupId>
+    <artifactId>decision-trace-spring-boot-starter</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+</dependency>
+```
+
+```yaml
+decision-trace:
+  tenant-id: tenant-a
+  environment: prod
+  actor-id: auth-service
+  collector-endpoint: http://collector:8080/v1/events
+```
+
+```java
+@Decision(decisionType = "AUTH_SERVICE_LOGIN", actorId = "auth-service")
+AuthResponse login(LoginRequest request) {
+    decisionContext.evidence("user_id", request.userId());
+    decisionContext.policyCheck("risk_entry_policy", "continue");
+    decisionContext.evaluation(Map.of("decision", "ALLOW"));
+    return new AuthResponse("ALLOW");
+}
 ```
 
 ---
@@ -86,12 +105,17 @@ See [**Architecture**](docs/architecture.md) for deep dive.
 - [**Architecture**](docs/architecture.md) - Ledger, Collector, Principles.
 - [**Safety & Privacy**](docs/safety.md) - Evidence integrity, PII redaction.
 - [**Migration Guide**](docs/migration.md) - Integrating with existing logging.
+- [**Java SDK Overview**](sdk/java/README.md) - Spring Boot quickstart and module map.
+- [**Java Runtime Architecture**](docs/java-runtime-architecture.md) - Async runtime and fail-open guarantees.
+- [**Java Golden Flow Walkthrough**](docs/java-golden-flow-walkthrough.md) - Auth/risk/passkey sample flow.
+- [**OTel Mapping Notes**](docs/otel-mapping-notes.md) - Canonical event to span projection.
 
 ### Examples
 
 - **[Refund Workflow](sdk/python/examples/refund_workflow/)**: Classify → Approve → Execute DAG.
 - **[Agent Chain](sdk/python/examples/agent_approval_chain/)**: AI Proposal → Human Review.
 - **[Policy Failure](sdk/python/examples/policy_failure_and_evaluation/)**: Recording denials.
+- **[Java Golden Flow](sdk/java/decision-trace-samples/)**: Spring Boot auth/risk/passkey DAG.
 
 ---
 

@@ -1,0 +1,52 @@
+version: 1
+service: auth-service
+owner: team-auth
+decisions:
+  - decision_type: AUTH_SERVICE_LOGIN
+    description: Root login decision for inbound authentication requests.
+    entrypoint: io.decisiontrace.samples.service.AuthService#login
+    actor:
+      id: auth-service
+      type: system
+    expected_children:
+      - RISK_ORCHESTRATION
+    key_evidence:
+      - user_id
+      - device_id
+    key_policies:
+      - risk_entry_policy
+    outcomes:
+      - ALLOW
+      - DENY
+
+  - decision_type: RISK_ORCHESTRATION
+    description: Aggregates device, velocity, and final risk outcomes.
+    entrypoint: io.decisiontrace.samples.service.RiskService#evaluate
+    actor:
+      id: risk-service
+      type: system
+    expected_children:
+      - DEVICE_TRUST_CHECK
+      - VELOCITY_CHECK
+      - FINAL_RISK_DECISION
+    key_evidence:
+      - risk_request_ip
+    key_policies:
+      - risk_entry_policy
+      - risk_v1
+    outcomes:
+      - ALLOW
+      - REVIEW
+      - DENY
+
+  - decision_type: PASSKEY_SERVICE_VERIFY
+    description: Captures passkey approval or challenge behavior.
+    entrypoint: io.decisiontrace.samples.service.PasskeyService#verify
+    actor:
+      id: passkey-service
+      type: system
+    expected_children: []
+    key_evidence: []
+    key_policies: []
+    outcomes:
+      - PASSKEY
