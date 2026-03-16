@@ -19,5 +19,8 @@ decision-trace = "decision_trace.cli:main"
 decision-trace-collector = "decision_trace_collector.main:main"
 
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["decision_trace*"]
+where = ["sdk/python", "services/collector"]
+include = ["decision_trace*", "decision_trace_collector*"]
+
+[tool.pytest.ini_options]
+testpaths = ["sdk/python/tests", "services/collector/tests"]

@@ -1,0 +1,113 @@
+version: "1.0"
+
+decision_trace_event:
+  type: object
+  additionalProperties: false
+  required:
+    - tenant_id
+    - environment
+    - schema_version
+    - timestamp
+    - trace_id
+    - decision_id
+    - event_id
+    - event_type
+    - decision_type
+    - actor
+    - payload
+
+  properties:
+    tenant_id:
+      type: string
+      description: Tenant or customer identifier
+
+    environment:
+      type: string
+      description: Deployment environment such as dev, test, prod
+
+    schema_version:
+      type: string
+      description: Event schema version
+
+    timestamp:
+      type: string
+      format: date-time
+      description: Event timestamp in ISO-8601 format
+
+    trace_id:
+      type: string
+      description: Distributed correlation identifier
+
+    decision_id:
+      type: string
+      description: Unique identifier of this decision node
+
+    parent_decision_id:
+      type: [string, "null"]
+      description: Immediate parent decision identifier, if any
+
+    event_id:
+      type: string
+      description: Unique identifier of this specific event instance
+
+    event_type:
+      type: string
+      enum:
+        - decision.start
+        - decision.evidence
+        - decision.policy_check
+        - decision.action
+        - decision.approval
+        - decision.outcome
+        - decision.error
+        - decision.evaluation
+
+    decision_type:
+      type: string
+      description: Logical decision category or name
+
+    actor:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - type
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum:
+            - human
+            - system
+            - agent
+        version:
+          type: [string, "null"]
+        org:
+          type: [string, "null"]
+
+    payload:
+      type: object
+      description: Event-specific payload contents
+      additionalProperties: true
+
+    causal_links:
+      type:
+        - array
+        - "null"
+      items:
+        type: object
+        additionalProperties: false
+        required:
+          - type
+          - target_decision_id
+        properties:
+          type:
+            type: string
+            enum:
+              - depends_on
+              - triggered_by
+              - uses_evidence_from
+              - compensates
+          target_decision_id:
+            type: string

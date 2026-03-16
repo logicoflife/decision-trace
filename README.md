@@ -89,9 +89,9 @@ See [**Architecture**](docs/architecture.md) for deep dive.
 
 ### Examples
 
-- **[Refund Workflow](examples/refund_workflow/)**: Classify → Approve → Execute DAG.
-- **[Agent Chain](examples/agent_approval_chain/)**: AI Proposal → Human Review.
-- **[Policy Failure](examples/policy_failure_and_evaluation/)**: Recording denials.
+- **[Refund Workflow](sdk/python/examples/refund_workflow/)**: Classify → Approve → Execute DAG.
+- **[Agent Chain](sdk/python/examples/agent_approval_chain/)**: AI Proposal → Human Review.
+- **[Policy Failure](sdk/python/examples/policy_failure_and_evaluation/)**: Recording denials.
 
 ---
 
