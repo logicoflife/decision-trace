@@ -1,31 +1,67 @@
 # decision-trace-samples
 
-This module demonstrates the intended Spring Boot adoption pattern.
+Spring Boot sample module used as the current Java quickstart and end-to-end integration path.
 
-## Flow
+For the guided first-run flow, use:
 
-- `AuthService` starts `AUTH_SERVICE_LOGIN`
-- `RiskService` emits evidence and policy checks for `RISK_ORCHESTRATION`
-- nested manual scopes record `DEVICE_TRUST_CHECK`, `VELOCITY_CHECK`, and `FINAL_RISK_DECISION`
-- `PasskeyService` emits approval telemetry for `PASSKEY_SERVICE_VERIFY`
+- [`sdk/java/README.md`](../README.md)
+- [`docs/java-quickstart.md`](../../../docs/java-quickstart.md)
+- [`docs/java-golden-flow-walkthrough.md`](../../../docs/java-golden-flow-walkthrough.md)
 
-The sample exports the same canonical events to three destinations at once:
+## Module Role
 
-- in-memory recording exporter for assertions
-- JSON ledger exporter for ledger projection checks
-- OpenTelemetry exporter for span projection checks
+This module demonstrates:
 
-## Running
+- `@Decision` on service entry points
+- `DecisionContext` lifecycle emission
+- nested manual `DecisionScope` usage
+- `RestTemplate` propagation between local endpoints
+- exporter fan-out across multiple sinks
+
+## Main Classes
+
+- Application:
+  - [`GoldenFlowApplication.java`](./src/main/java/io/decisiontrace/samples/GoldenFlowApplication.java)
+- Services:
+  - [`AuthService.java`](./src/main/java/io/decisiontrace/samples/service/AuthService.java)
+  - [`RiskService.java`](./src/main/java/io/decisiontrace/samples/service/RiskService.java)
+  - [`PasskeyService.java`](./src/main/java/io/decisiontrace/samples/service/PasskeyService.java)
+- Runtime wiring:
+  - [`SampleRuntimeConfiguration.java`](./src/main/java/io/decisiontrace/samples/config/SampleRuntimeConfiguration.java)
+- Integration test:
+  - [`GoldenFlowIntegrationTest.java`](./src/test/java/io/decisiontrace/samples/GoldenFlowIntegrationTest.java)
+
+## Exporters Wired In The Sample
+
+`SampleRuntimeConfiguration` assembles a primary `DecisionEmitter` with:
+
+- `io.decisiontrace.samples.telemetry.RecordingDecisionExporter`
+- `io.decisiontrace.samples.telemetry.ResettableJsonLedgerExporter`
+- `io.decisiontrace.core.exporter.otel.OpenTelemetryDecisionExporter`
+
+This is sample-specific wiring for test coverage. It is separate from the property-driven exporter auto-configuration in `decision-trace-spring-boot-starter`.
+
+## Run
 
 ```bash
-mvn test -pl decision-trace-samples -am
+cd sdk/java
+mvn test -pl decision-trace-samples -Dtest=GoldenFlowIntegrationTest -am
 ```
 
-The main integration coverage is in `GoldenFlowIntegrationTest`, which boots the sample app on a random local port and verifies:
+## What The Integration Test Verifies
 
-- cross-service causal propagation
-- nested DAG shape
-- lifecycle events across services
-- ledger and OTel projection consistency
+- root and child decision lineage across:
+  - `AUTH_SERVICE_LOGIN`
+  - `RISK_ORCHESTRATION`
+  - `DEVICE_TRUST_CHECK`
+  - `VELOCITY_CHECK`
+  - `FINAL_RISK_DECISION`
+  - `PASSKEY_SERVICE_VERIFY`
+- canonical event schema shape
+- JSON ledger consistency
+- OpenTelemetry projection consistency
+- cross-service propagation using local HTTP calls
 
-For a step-by-step walkthrough of the emitted decisions, see [docs/java-golden-flow-walkthrough.md](../../../docs/java-golden-flow-walkthrough.md).
+## Current Limitation
+
+[`GoldenFlowApplication.java`](./src/main/java/io/decisiontrace/samples/GoldenFlowApplication.java) does not currently define a `main` method, so the sample is best treated as a test-driven demo rather than a standalone runnable app.
