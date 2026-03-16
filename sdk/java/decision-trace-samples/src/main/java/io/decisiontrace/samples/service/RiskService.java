@@ -13,6 +13,7 @@ import io.decisiontrace.samples.service.dto.RiskRequest;
 import io.decisiontrace.samples.service.dto.RiskResponse;
 import io.decisiontrace.spring.annotation.Decision;
 import io.decisiontrace.spring.config.DecisionTraceProperties;
+import io.decisiontrace.spring.context.DecisionContext;
 import java.time.Clock;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -28,6 +29,7 @@ public class RiskService {
     private final IdGenerator idGenerator;
     private final Clock decisionTraceClock;
     private final DecisionTraceProperties properties;
+    private final DecisionContext decisionContext;
 
     public RiskService(
             RestTemplate restTemplate,
@@ -36,7 +38,8 @@ public class RiskService {
             DecisionContextHolder decisionContextHolder,
             IdGenerator idGenerator,
             Clock decisionTraceClock,
-            DecisionTraceProperties properties) {
+            DecisionTraceProperties properties,
+            DecisionContext decisionContext) {
         this.restTemplate = restTemplate;
         this.endpoints = endpoints;
         this.decisionEmitter = decisionEmitter;
@@ -44,10 +47,13 @@ public class RiskService {
         this.idGenerator = idGenerator;
         this.decisionTraceClock = decisionTraceClock;
         this.properties = properties;
+        this.decisionContext = decisionContext;
     }
 
     @Decision(decisionType = "RISK_ORCHESTRATION", actorId = "risk-service")
     public RiskResponse evaluate(RiskRequest request) {
+        decisionContext.evidence("risk_request_ip", request.ipAddress());
+        decisionContext.policyCheck("risk_entry_policy", "continue", Map.of("user_id", request.userId()), null);
         try (DecisionScope deviceTrust = nestedScope("DEVICE_TRUST_CHECK")) {
             deviceTrust.evidence("device_id", request.deviceId());
             deviceTrust.outcome("trusted");
@@ -70,6 +76,9 @@ public class RiskService {
             finalRisk.outcome("ALLOW");
         }
 
+        decisionContext.evaluation(new LinkedHashMap<>(Map.of(
+                "decision", "ALLOW",
+                "passkey_status", passkeyStatus)));
         return new RiskResponse("ALLOW", passkeyStatus);
     }
 

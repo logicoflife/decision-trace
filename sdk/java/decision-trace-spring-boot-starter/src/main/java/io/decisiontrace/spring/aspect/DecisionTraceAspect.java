@@ -9,6 +9,7 @@ import io.decisiontrace.core.ids.IdGenerator;
 import io.decisiontrace.core.model.Actor;
 import io.decisiontrace.spring.annotation.Decision;
 import io.decisiontrace.spring.config.DecisionTraceProperties;
+import io.decisiontrace.spring.context.DecisionScopeHolder;
 import io.decisiontrace.spring.metrics.DecisionTraceMetrics;
 import io.decisiontrace.spring.propagation.DecisionTraceHeaders;
 import io.decisiontrace.spring.propagation.InboundTraceContext;
@@ -28,6 +29,7 @@ public class DecisionTraceAspect {
     private final Clock clock;
     private final DecisionTraceProperties properties;
     private final DecisionTraceMetrics metrics;
+    private final DecisionScopeHolder scopeHolder;
 
     public DecisionTraceAspect(
             DecisionEmitter emitter,
@@ -36,7 +38,8 @@ public class DecisionTraceAspect {
             IdGenerator idGenerator,
             Clock clock,
             DecisionTraceProperties properties,
-            DecisionTraceMetrics metrics) {
+            DecisionTraceMetrics metrics,
+            DecisionScopeHolder scopeHolder) {
         this.emitter = emitter;
         this.contextHolder = contextHolder;
         this.inboundTraceContext = inboundTraceContext;
@@ -44,6 +47,7 @@ public class DecisionTraceAspect {
         this.clock = clock;
         this.properties = properties;
         this.metrics = metrics;
+        this.scopeHolder = scopeHolder;
     }
 
     @Around("@annotation(decision)")
@@ -77,7 +81,9 @@ public class DecisionTraceAspect {
                     .traceId(traceId)
                     .parentDecisionId(parentDecisionId)
                     .build();
-            return DecisionScope.open(spec, emitter, contextHolder, idGenerator, clock);
+            DecisionScope scope = DecisionScope.open(spec, emitter, contextHolder, idGenerator, clock);
+            scopeHolder.push(scope);
+            return scope;
         } catch (Exception exception) {
             metrics.recordInstrumentationFailure();
             return null;
@@ -142,6 +148,8 @@ public class DecisionTraceAspect {
         } catch (Exception exception) {
             metrics.recordInstrumentationFailure();
             contextHolder.clear();
+        } finally {
+            scopeHolder.pop(scope);
         }
     }
 }

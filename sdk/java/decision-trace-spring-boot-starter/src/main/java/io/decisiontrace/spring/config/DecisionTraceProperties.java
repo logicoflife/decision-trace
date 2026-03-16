@@ -14,6 +14,7 @@ public class DecisionTraceProperties {
     private String traceIdHeader = "X-Decision-Trace-Trace-Id";
     private String parentDecisionIdHeader = "X-Decision-Trace-Parent-Decision-Id";
     private int ringBufferSize = 1024;
+    private boolean validationEnabled;
 
     public String getTenantId() {
         return tenantId;
@@ -85,5 +86,13 @@ public class DecisionTraceProperties {
 
     public void setRingBufferSize(int ringBufferSize) {
         this.ringBufferSize = ringBufferSize;
+    }
+
+    public boolean isValidationEnabled() {
+        return validationEnabled;
+    }
+
+    public void setValidationEnabled(boolean validationEnabled) {
+        this.validationEnabled = validationEnabled;
     }
 }

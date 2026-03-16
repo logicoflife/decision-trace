@@ -10,10 +10,16 @@ import io.decisiontrace.core.runtime.DecisionDispatcher;
 import io.decisiontrace.core.runtime.DecisionRuntimeMetrics;
 import io.decisiontrace.spring.aspect.DecisionTraceAspect;
 import io.decisiontrace.spring.config.DecisionTraceProperties;
+import io.decisiontrace.spring.context.DecisionContext;
+import io.decisiontrace.spring.context.DecisionScopeHolder;
+import io.decisiontrace.spring.context.DefaultDecisionContext;
 import io.decisiontrace.spring.http.DecisionTraceHandlerInterceptor;
+import io.decisiontrace.spring.http.DecisionTracePropagationSupport;
 import io.decisiontrace.spring.http.DecisionTraceRestTemplateInterceptor;
+import io.decisiontrace.spring.http.DecisionTraceWebClientFilter;
 import io.decisiontrace.spring.metrics.DecisionTraceMetrics;
 import io.decisiontrace.spring.propagation.InboundTraceContext;
+import jakarta.validation.Validator;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Clock;
@@ -22,9 +28,12 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.web.reactive.function.client.WebClientCustomizer;
 import org.springframework.boot.web.client.RestTemplateCustomizer;
 import org.springframework.context.annotation.Bean;
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -68,6 +77,12 @@ public class DecisionTraceAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
+    public DecisionScopeHolder decisionScopeHolder() {
+        return new DecisionScopeHolder();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
     public IdGenerator idGenerator() {
         return new UuidIdGenerator();
     }
@@ -100,7 +115,8 @@ public class DecisionTraceAutoConfiguration {
             IdGenerator idGenerator,
             Clock decisionTraceClock,
             DecisionTraceProperties properties,
-            DecisionTraceMetrics metrics) {
+            DecisionTraceMetrics metrics,
+            DecisionScopeHolder scopeHolder) {
         return new DecisionTraceAspect(
                 decisionEmitter,
                 decisionContextHolder,
@@ -108,7 +124,39 @@ public class DecisionTraceAutoConfiguration {
                 idGenerator,
                 decisionTraceClock,
                 properties,
-                metrics);
+                metrics,
+                scopeHolder);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public DecisionTracePropagationSupport decisionTracePropagationSupport(
+            DecisionTraceProperties properties,
+            DecisionContextHolder decisionContextHolder,
+            InboundTraceContext inboundTraceContext) {
+        return new DecisionTracePropagationSupport(properties, decisionContextHolder, inboundTraceContext);
+    }
+
+    @Bean
+    @ConditionalOnClass(name = "jakarta.validation.Validator")
+    @ConditionalOnMissingBean(Validator.class)
+    public LocalValidatorFactoryBean decisionTraceValidator() {
+        return new LocalValidatorFactoryBean();
+    }
+
+    @Bean
+    @ConditionalOnClass(name = "jakarta.validation.Validator")
+    @ConditionalOnMissingBean
+    public DecisionContext decisionContext(
+            DecisionScopeHolder scopeHolder,
+            DecisionTraceMetrics metrics,
+            DecisionTraceProperties properties,
+            org.springframework.beans.factory.ObjectProvider<Validator> validatorProvider) {
+        return new DefaultDecisionContext(
+                scopeHolder,
+                metrics,
+                validatorProvider.getIfAvailable(),
+                properties.isValidationEnabled());
     }
 
     @Bean
@@ -134,10 +182,8 @@ public class DecisionTraceAutoConfiguration {
     @Bean
     @ConditionalOnClass(RestTemplate.class)
     public DecisionTraceRestTemplateInterceptor decisionTraceRestTemplateInterceptor(
-            DecisionTraceProperties properties,
-            DecisionContextHolder decisionContextHolder,
-            InboundTraceContext inboundTraceContext) {
-        return new DecisionTraceRestTemplateInterceptor(properties, decisionContextHolder, inboundTraceContext);
+            DecisionTracePropagationSupport propagationSupport) {
+        return new DecisionTraceRestTemplateInterceptor(propagationSupport);
     }
 
     @Bean
@@ -149,5 +195,18 @@ public class DecisionTraceAutoConfiguration {
                 restTemplate.getInterceptors().add(interceptor);
             }
         };
+    }
+
+    @Bean
+    @ConditionalOnClass(WebClient.class)
+    public DecisionTraceWebClientFilter decisionTraceWebClientFilter(
+            DecisionTracePropagationSupport propagationSupport) {
+        return new DecisionTraceWebClientFilter(propagationSupport);
+    }
+
+    @Bean
+    @ConditionalOnClass(WebClient.class)
+    public WebClientCustomizer decisionTraceWebClientCustomizer(DecisionTraceWebClientFilter filter) {
+        return webClientBuilder -> webClientBuilder.filter(filter);
     }
 }
