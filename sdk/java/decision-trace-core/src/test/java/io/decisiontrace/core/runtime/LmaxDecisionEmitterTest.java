@@ -141,6 +141,8 @@ class LmaxDecisionEmitterTest {
         assertEquals("trace-1", span.getAttributes().get(io.opentelemetry.api.common.AttributeKey.stringKey("dt.trace_id")));
         assertEquals("decision-1", span.getAttributes().get(io.opentelemetry.api.common.AttributeKey.stringKey("dt.decision_id")));
         assertEquals("decision.start", span.getAttributes().get(io.opentelemetry.api.common.AttributeKey.stringKey("dt.event_type")));
+        assertEquals("1.0", span.getAttributes().get(io.opentelemetry.api.common.AttributeKey.stringKey("dt.schema_version")));
+        assertEquals("risk-engine", span.getAttributes().get(io.opentelemetry.api.common.AttributeKey.stringKey("dt.actor.id")));
         tracerProvider.close();
     }
 

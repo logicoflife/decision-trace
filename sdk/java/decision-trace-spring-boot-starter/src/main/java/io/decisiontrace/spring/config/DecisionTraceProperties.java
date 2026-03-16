@@ -15,6 +15,12 @@ public class DecisionTraceProperties {
     private String parentDecisionIdHeader = "X-Decision-Trace-Parent-Decision-Id";
     private int ringBufferSize = 1024;
     private boolean validationEnabled;
+    private String collectorEndpoint;
+    private int collectorBatchSize = 50;
+    private long collectorConnectTimeoutMillis = 1000L;
+    private long collectorRequestTimeoutMillis = 3000L;
+    private String jsonLedgerPath;
+    private boolean otelExportEnabled = true;
 
     public String getTenantId() {
         return tenantId;
@@ -94,5 +100,53 @@ public class DecisionTraceProperties {
 
     public void setValidationEnabled(boolean validationEnabled) {
         this.validationEnabled = validationEnabled;
+    }
+
+    public String getCollectorEndpoint() {
+        return collectorEndpoint;
+    }
+
+    public void setCollectorEndpoint(String collectorEndpoint) {
+        this.collectorEndpoint = collectorEndpoint;
+    }
+
+    public int getCollectorBatchSize() {
+        return collectorBatchSize;
+    }
+
+    public void setCollectorBatchSize(int collectorBatchSize) {
+        this.collectorBatchSize = collectorBatchSize;
+    }
+
+    public long getCollectorConnectTimeoutMillis() {
+        return collectorConnectTimeoutMillis;
+    }
+
+    public void setCollectorConnectTimeoutMillis(long collectorConnectTimeoutMillis) {
+        this.collectorConnectTimeoutMillis = collectorConnectTimeoutMillis;
+    }
+
+    public long getCollectorRequestTimeoutMillis() {
+        return collectorRequestTimeoutMillis;
+    }
+
+    public void setCollectorRequestTimeoutMillis(long collectorRequestTimeoutMillis) {
+        this.collectorRequestTimeoutMillis = collectorRequestTimeoutMillis;
+    }
+
+    public String getJsonLedgerPath() {
+        return jsonLedgerPath;
+    }
+
+    public void setJsonLedgerPath(String jsonLedgerPath) {
+        this.jsonLedgerPath = jsonLedgerPath;
+    }
+
+    public boolean isOtelExportEnabled() {
+        return otelExportEnabled;
+    }
+
+    public void setOtelExportEnabled(boolean otelExportEnabled) {
+        this.otelExportEnabled = otelExportEnabled;
     }
 }

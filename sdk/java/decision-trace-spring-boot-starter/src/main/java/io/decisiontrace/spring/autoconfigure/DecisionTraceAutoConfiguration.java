@@ -4,6 +4,11 @@ import io.decisiontrace.core.context.DecisionContextHolder;
 import io.decisiontrace.core.emitter.DecisionEmitter;
 import io.decisiontrace.core.emitter.LmaxDecisionEmitter;
 import io.decisiontrace.core.exporter.DecisionExporter;
+import io.decisiontrace.core.exporter.http.CollectorBatchExporter;
+import io.decisiontrace.core.exporter.http.CollectorBatchSender;
+import io.decisiontrace.core.exporter.http.HttpCollectorBatchSender;
+import io.decisiontrace.core.exporter.json.JsonLedgerExporter;
+import io.decisiontrace.core.exporter.otel.OpenTelemetryDecisionExporter;
 import io.decisiontrace.core.ids.IdGenerator;
 import io.decisiontrace.core.ids.UuidIdGenerator;
 import io.decisiontrace.core.runtime.DecisionDispatcher;
@@ -19,14 +24,21 @@ import io.decisiontrace.spring.http.DecisionTraceRestTemplateInterceptor;
 import io.decisiontrace.spring.http.DecisionTraceWebClientFilter;
 import io.decisiontrace.spring.metrics.DecisionTraceMetrics;
 import io.decisiontrace.spring.propagation.InboundTraceContext;
+import io.opentelemetry.api.OpenTelemetry;
 import jakarta.validation.Validator;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.nio.file.Path;
 import java.time.Clock;
+import java.time.Duration;
 import java.util.List;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.reactive.function.client.WebClientCustomizer;
 import org.springframework.boot.web.client.RestTemplateCustomizer;
@@ -157,6 +169,43 @@ public class DecisionTraceAutoConfiguration {
                 metrics,
                 validatorProvider.getIfAvailable(),
                 properties.isValidationEnabled());
+    }
+
+    @Bean
+    @ConditionalOnProperty(prefix = "decision-trace", name = "collector-endpoint")
+    @ConditionalOnMissingBean
+    public CollectorBatchSender decisionTraceCollectorBatchSender(DecisionTraceProperties properties) {
+        HttpClient httpClient = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofMillis(properties.getCollectorConnectTimeoutMillis()))
+                .build();
+        return new HttpCollectorBatchSender(
+                httpClient,
+                URI.create(properties.getCollectorEndpoint()),
+                Duration.ofMillis(properties.getCollectorRequestTimeoutMillis()));
+    }
+
+    @Bean
+    @ConditionalOnBean(CollectorBatchSender.class)
+    @ConditionalOnMissingBean(name = "decisionTraceCollectorExporter")
+    public DecisionExporter decisionTraceCollectorExporter(
+            CollectorBatchSender sender,
+            DecisionTraceProperties properties) {
+        return new CollectorBatchExporter(sender, properties.getCollectorBatchSize());
+    }
+
+    @Bean
+    @ConditionalOnProperty(prefix = "decision-trace", name = "json-ledger-path")
+    @ConditionalOnMissingBean(name = "decisionTraceJsonLedgerExporter")
+    public DecisionExporter decisionTraceJsonLedgerExporter(DecisionTraceProperties properties) {
+        return new JsonLedgerExporter(Path.of(properties.getJsonLedgerPath()));
+    }
+
+    @Bean
+    @ConditionalOnBean(OpenTelemetry.class)
+    @ConditionalOnProperty(prefix = "decision-trace", name = "otel-export-enabled", havingValue = "true", matchIfMissing = true)
+    @ConditionalOnMissingBean(name = "decisionTraceOpenTelemetryExporter")
+    public DecisionExporter decisionTraceOpenTelemetryExporter(OpenTelemetry openTelemetry) {
+        return new OpenTelemetryDecisionExporter(openTelemetry.getTracer("decision-trace-java"));
     }
 
     @Bean
