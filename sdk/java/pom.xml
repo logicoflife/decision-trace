@@ -10,6 +10,21 @@
 
     <name>Decision Trace Java SDK</name>
     <description>Parent aggregator for the Decision Trace Java SDK modules.</description>
+    <url>https://github.com/decision-trace/decision-trace</url>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/license/mit/</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <scm>
+        <url>https://github.com/decision-trace/decision-trace</url>
+        <connection>scm:git:https://github.com/decision-trace/decision-trace.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/decision-trace/decision-trace.git</developerConnection>
+    </scm>
 
     <modules>
         <module>decision-trace-bom</module>

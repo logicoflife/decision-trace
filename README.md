@@ -3,6 +3,8 @@
 
 **Open Standard for Decision Telemetry.**
 
+The project is actively evolving with new SDKs and integrations. Core telemetry concepts and event contracts are considered stable.
+
 Decision Trace is an append-only ledger for recording the *reasoning* of systems. It captures decisions, evidence, policy checks, and outcomes in a structured, queryable graph.
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -18,6 +20,8 @@ pip install decision-trace[collector]
 decision-trace dev
 ```
 
+`decision-trace dev` starts a local-only collector on `127.0.0.1:8711` and writes demo data to `./data/events.jsonl`.
+
 ```python
 from decision_trace import decision
 
@@ -28,7 +32,7 @@ with decision("loan.approval", actor={"type": "system", "id": "risk_engine"}) as
 ```
 
 ### Java SDK
-Add the Spring Boot starter and point it at a collector:
+Add the Spring Boot starter and point it at a collector. The endpoint below is a local/example placeholder, not a hosted service:
 
 ```xml
 <dependency>
@@ -106,6 +110,8 @@ See [**Architecture**](docs/architecture.md) for deep dive.
 - [**Safety & Privacy**](docs/safety.md) - Evidence integrity, PII redaction.
 - [**Migration Guide**](docs/migration.md) - Integrating with existing logging.
 - [**Java SDK Overview**](sdk/java/README.md) - Spring Boot quickstart and module map.
+- [**Python SDK Overview**](sdk/python/README.md) - Install, examples, and test commands.
+- [**Collector Service**](services/collector/README.md) - Local ingestion service and storage behavior.
 - [**Java Runtime Architecture**](docs/java-runtime-architecture.md) - Async runtime and fail-open guarantees.
 - [**Java Golden Flow Walkthrough**](docs/java-golden-flow-walkthrough.md) - Auth/risk/passkey sample flow.
 - [**OTel Mapping Notes**](docs/otel-mapping-notes.md) - Canonical event to span projection.
@@ -128,6 +134,25 @@ If you build on this framework or create a derivative project, we ask that you c
 ### Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+### Validate Locally
+
+Python:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -e ".[collector,test]"
+pytest
+```
+
+Java:
+
+```bash
+cd sdk/java
+mvn test
+mvn test -pl decision-trace-samples -am
+```
 
 ### License
 

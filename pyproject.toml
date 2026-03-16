@@ -8,11 +8,32 @@ version = "0.1.0"
 description = "Decision Trace v1 SDK"
 readme = "README.md"
 requires-python = ">=3.10"
+license = "MIT"
 dependencies = ["pydantic>=2.0", "jsonschema>=4.0", "PyYAML>=6.0", "opentelemetry-api>=1.20", "opentelemetry-sdk>=1.20"]
+authors = [
+    { name = "Decision Trace contributors" },
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: System :: Monitoring",
+]
 
 [project.optional-dependencies]
 test = ["pytest>=7.0", "fastapi>=0.110", "httpx>=0.24"]
 collector = ["fastapi>=0.110", "uvicorn>=0.23"]
+
+[project.urls]
+Homepage = "https://github.com/decision-trace/decision-trace"
+Repository = "https://github.com/decision-trace/decision-trace"
+Issues = "https://github.com/decision-trace/decision-trace/issues"
+Documentation = "https://github.com/decision-trace/decision-trace#readme"
 
 [project.scripts]
 decision-trace = "decision_trace.cli:main"

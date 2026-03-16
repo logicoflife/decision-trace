@@ -23,8 +23,10 @@ Decision Trace follows a **Spec-First** philosophy. The core SDK semantics (appe
 2.  **Fork & Branch**: Create a feature branch from `main`.
 3.  **Test**: Ensure `pytest` passes locally.
     ```bash
-    pip install -e .[dev]
+    pip install -e ".[collector,test]"
     pytest
+    cd sdk/java
+    mvn test
     ```
 4.  **Lint**: Code must be typed and formatted.
 5.  **Submit**: Open a PR with a clear description of the change.
@@ -43,8 +45,13 @@ python -m venv .venv
 source .venv/bin/activate
 
 # Install
-pip install -e .[dev,collector]
+pip install -e ".[collector,test]"
 
 # Verify
 decision-trace dev
+pytest
+
+# Java verify
+cd sdk/java
+mvn test
 ```
