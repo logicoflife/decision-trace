@@ -1,5 +1,5 @@
 
-# Decision Trace™
+# Decision Trace
 **Open Standard for Decision Telemetry.**
 
 [![docs DeepWiki](https://img.shields.io/badge/docs-DeepWiki-blue)](https://deepwiki.com/logicoflife/decision-trace)
