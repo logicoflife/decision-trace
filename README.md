@@ -8,7 +8,7 @@ The project is actively evolving with new SDKs and integrations. Core telemetry 
 
 Decision Trace is an append-only ledger for recording the *reasoning* of systems. It captures decisions, evidence, policy checks, and outcomes in a structured, queryable graph.
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Safety](https://img.shields.io/badge/safety-hardened-green.svg)](docs/safety.md)
 
 ---
@@ -157,7 +157,7 @@ mvn test -pl decision-trace-samples -am
 
 ### License
 
-Licensed under MIT.
+Licensed under the Apache License, Version 2.0 (the "License"). You may not use this project except in compliance with the License. See the LICENSE and NOTICE files for the full license text and intellectual property notices.
 
 ---
 ### Trademarks
