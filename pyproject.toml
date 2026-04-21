@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "decision-trace"
-version = "0.1.0"
+version = "0.1.1"
 description = "Decision Trace v1 SDK"
 readme = { file = "sdk/python/README.md", content-type = "text/markdown" }
 requires-python = ">=3.10"
@@ -46,6 +46,9 @@ decision-trace-collector = "decision_trace_collector.main:main"
 [tool.setuptools.packages.find]
 where = ["sdk/python", "services/collector"]
 include = ["decision_trace*", "decision_trace_collector*"]
+
+[tool.setuptools.package-data]
+decision_trace = ["schemas/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["sdk/python/tests", "services/collector/tests"]

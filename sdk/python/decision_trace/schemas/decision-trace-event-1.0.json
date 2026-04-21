@@ -1,0 +1,79 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Decision Trace Event v1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "tenant_id",
+    "environment",
+    "schema_version",
+    "timestamp",
+    "trace_id",
+    "decision_id",
+    "parent_decision_id",
+    "event_id",
+    "event_type",
+    "decision_type",
+    "actor",
+    "payload"
+  ],
+  "properties": {
+    "tenant_id": {"type": "string"},
+    "environment": {"type": "string"},
+    "schema_version": {"type": "string", "enum": ["1.0"]},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "trace_id": {"type": "string"},
+    "decision_id": {"type": "string"},
+    "parent_decision_id": {"type": ["string", "null"]},
+    "event_id": {"type": "string"},
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "decision.start",
+        "decision.evidence",
+        "decision.policy_check",
+        "decision.action",
+        "decision.approval",
+        "decision.outcome",
+        "decision.error",
+        "decision.evaluation"
+      ]
+    },
+    "decision_type": {"type": "string"},
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "id"],
+      "properties": {
+        "type": {"type": "string", "enum": ["agent", "human", "system"]},
+        "id": {"type": "string"},
+        "version": {"type": "string"},
+        "org": {"type": "string"}
+      }
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "causal_links": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "target_decision_id"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "depends_on",
+              "triggered_by",
+              "uses_evidence_from",
+              "compensates"
+            ]
+          },
+          "target_decision_id": {"type": "string"}
+        }
+      }
+    }
+  }
+}

@@ -2,7 +2,6 @@
 import pytest
 import json
 from unittest.mock import patch, MagicMock
-from io import StringIO
 from pathlib import Path
 from decision_trace.cli import main
 
@@ -44,6 +43,28 @@ def test_version_command(capsys):
         main()
     captured = capsys.readouterr()
     assert "Decision Trace v" in captured.out
+
+
+def test_dev_uses_env_configured_ledger_path(capsys, tmp_path, monkeypatch):
+    ledger_path = tmp_path / "mounted" / "events.jsonl"
+    monkeypatch.setenv("DECISION_TRACE_DATA_PATH", str(ledger_path))
+
+    mock_uvicorn = MagicMock()
+    with patch.dict(
+        "sys.modules",
+        {
+            "uvicorn": mock_uvicorn,
+            "decision_trace_collector": MagicMock(),
+            "decision_trace_collector.api": MagicMock(),
+        },
+    ):
+        with patch("sys.argv", ["decision-trace", "dev"]):
+            main()
+
+    captured = capsys.readouterr()
+    assert str(ledger_path) in captured.out
+    assert ledger_path.parent.exists()
+    mock_uvicorn.run.assert_called_once()
 
 def test_inspect_missing_file(capsys):
     with patch("sys.argv", ["decision-trace", "inspect", "t1", "-f", "nonexistent.jsonl"]):

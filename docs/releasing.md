@@ -58,8 +58,17 @@ Python:
 
 ```bash
 python -m pip install --upgrade build twine
-python -m build
+python -m build --no-isolation
 python -m twine check dist/*
+```
+
+Collector smoke test from the built wheel:
+
+```bash
+python -m venv /tmp/decision-trace-smoke
+WHEEL="$(ls dist/*.whl | head -n 1)"
+/tmp/decision-trace-smoke/bin/pip install "decision-trace[collector] @ file://$(pwd)/${WHEEL}"
+DECISION_TRACE_DATA_PATH=/tmp/decision-trace-smoke/events.jsonl /tmp/decision-trace-smoke/bin/decision-trace-collector
 ```
 
 Java:
@@ -89,7 +98,7 @@ mvn -pl decision-trace-bom,decision-trace-core,decision-trace-spring-boot-starte
 
 1. Update versions if needed.
 2. Commit the release state.
-3. Create and push a tag like `v0.1.0`.
+3. Create and push a tag like `v0.1.1`.
 4. Both publish workflows will start automatically on that tag.
 
 The Java workflow publishes only the library modules. The sample app and benchmark module remain in the reactor for tests, but are skipped from Central deployment.

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -13,27 +14,33 @@ BLUE = "\033[94m"
 RESET = "\033[0m"
 
 
+def _collector_ledger_path() -> Path:
+    value = os.getenv("DECISION_TRACE_DATA_PATH")
+    return Path(value) if value else Path("./data/events.jsonl")
+
+
 
 
 def cmd_dev(args: argparse.Namespace) -> None:
+    ledger_path = _collector_ledger_path()
     print(f"{BLUE}Decision Trace dev collector running{RESET}")
     print(f"Endpoint: {GREEN}http://127.0.0.1:8711/v1/events{RESET}")
-    print(f"Ledger:   {GREEN}./data/events.jsonl{RESET}")
+    print(f"Ledger:   {GREEN}{ledger_path}{RESET}")
     print("Try:")
     print("  python sdk/python/examples/refund_workflow/run.py")
     print("  decision-trace inspect --last --verbose")
     
-    # Ensure data directory exists
-    Path("./data").mkdir(exist_ok=True)
+    ledger_path.parent.mkdir(parents=True, exist_ok=True)
     
     try:
         import uvicorn
+        import decision_trace_collector.api
         uvicorn.run(
-            "decision_trace_collector.api:app",
+            "decision_trace_collector.api:create_app",
             host="127.0.0.1",
             port=8711,
+            factory=True,
             reload=True,
-            app_dir="services/collector",
         )
     except ImportError:
         print(f"{RED}Error: decision-trace-collector not installed. Install with [collector] extra.{RESET}")

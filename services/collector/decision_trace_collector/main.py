@@ -12,7 +12,13 @@ def main() -> None:
         )
         raise SystemExit(1)
 
-    uvicorn.run(create_app(), host="0.0.0.0", port=8000)
+    try:
+        app = create_app()
+    except RuntimeError as exc:
+        print(f"decision-trace-collector failed to start: {exc}", file=sys.stderr)
+        raise SystemExit(1)
+
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 
 
 if __name__ == "__main__":
