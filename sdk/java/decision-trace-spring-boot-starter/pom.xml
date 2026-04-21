@@ -4,9 +4,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>io.decisiontrace</groupId>
+        <groupId>io.github.logicoflife.decisiontrace</groupId>
         <artifactId>decision-trace-java-parent</artifactId>
-        <version>0.1.0-SNAPSHOT</version>
+        <version>0.1.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -14,6 +14,7 @@
     <packaging>jar</packaging>
 
     <name>Decision Trace Spring Boot Starter</name>
+    <description>Spring Boot auto-configuration and instrumentation for Decision Trace.</description>
 
     <properties>
         <spring.boot.version>3.3.2</spring.boot.version>
@@ -21,7 +22,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>io.decisiontrace</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>decision-trace-core</artifactId>
             <version>${project.version}</version>
         </dependency>

@@ -12,9 +12,9 @@ For end-to-end setup and production guidance, use:
 
 ```xml
 <dependency>
-    <groupId>io.decisiontrace</groupId>
+    <groupId>io.github.logicoflife.decisiontrace</groupId>
     <artifactId>decision-trace-spring-boot-starter</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>0.1.0</version>
 </dependency>
 ```
 

@@ -11,20 +11,20 @@ This README is the Java entry point. Use it to choose the right path:
 ## Module Map
 
 - `decision-trace-core`
-  - Artifact: `io.decisiontrace:decision-trace-core`
+  - Artifact: `io.github.logicoflife.decisiontrace:decision-trace-core`
   - Purpose: canonical event model, `DecisionScope`, emitters, exporters, runtime metrics
 - `decision-trace-spring-boot-starter`
-  - Artifact: `io.decisiontrace:decision-trace-spring-boot-starter`
+  - Artifact: `io.github.logicoflife.decisiontrace:decision-trace-spring-boot-starter`
   - Purpose: Spring Boot auto-configuration, `@Decision`, `DecisionContext`, HTTP propagation, Micrometer metrics
 - `decision-trace-samples`
-  - Artifact: `io.decisiontrace:decision-trace-samples`
+  - Artifact: `io.github.logicoflife.decisiontrace:decision-trace-samples`
   - Purpose: auth/risk/passkey sample used by the integration tests
 - `decision-trace-benchmarks`
-  - Artifact: `io.decisiontrace:decision-trace-benchmarks`
+  - Artifact: `io.github.logicoflife.decisiontrace:decision-trace-benchmarks`
   - Purpose: JMH benchmarks for runtime overhead
 - `decision-trace-bom`
-  - Artifact: `io.decisiontrace:decision-trace-bom`
-  - Status: module exists, but its `pom.xml` does not currently declare managed dependencies
+  - Artifact: `io.github.logicoflife.decisiontrace:decision-trace-bom`
+  - Purpose: version alignment for the published Java modules
 
 ## What Is Implemented
 
@@ -100,9 +100,9 @@ Starter dependency:
 
 ```xml
 <dependency>
-    <groupId>io.decisiontrace</groupId>
+    <groupId>io.github.logicoflife.decisiontrace</groupId>
     <artifactId>decision-trace-spring-boot-starter</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>0.1.0</version>
 </dependency>
 ```
 

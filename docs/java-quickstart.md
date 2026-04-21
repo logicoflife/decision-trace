@@ -40,8 +40,8 @@ mvn test
 ### Spring Boot modules involved
 
 - [`sdk/java/decision-trace-samples/pom.xml`](../sdk/java/decision-trace-samples/pom.xml)
-  - depends on `io.decisiontrace:decision-trace-core`
-  - depends on `io.decisiontrace:decision-trace-spring-boot-starter`
+  - depends on `io.github.logicoflife.decisiontrace:decision-trace-core`
+  - depends on `io.github.logicoflife.decisiontrace:decision-trace-spring-boot-starter`
   - uses `org.springframework.boot:spring-boot-starter-web`
 
 ### Application flow
@@ -136,9 +136,9 @@ When you move from the sample to a real service, the shortest implemented path i
 
 ```xml
 <dependency>
-    <groupId>io.decisiontrace</groupId>
+    <groupId>io.github.logicoflife.decisiontrace</groupId>
     <artifactId>decision-trace-spring-boot-starter</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>0.1.0</version>
 </dependency>
 ```
 

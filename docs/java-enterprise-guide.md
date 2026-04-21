@@ -7,12 +7,12 @@ This guide documents the production-style adoption path that is actually impleme
 Use the Spring Boot starter module:
 
 - Module: [`sdk/java/decision-trace-spring-boot-starter`](../sdk/java/decision-trace-spring-boot-starter)
-- Artifact: `io.decisiontrace:decision-trace-spring-boot-starter`
+- Artifact: `io.github.logicoflife.decisiontrace:decision-trace-spring-boot-starter`
 
 Use the core module directly only if you need manual runtime control outside Spring:
 
 - Module: [`sdk/java/decision-trace-core`](../sdk/java/decision-trace-core)
-- Artifact: `io.decisiontrace:decision-trace-core`
+- Artifact: `io.github.logicoflife.decisiontrace:decision-trace-core`
 
 ## What The Starter Auto-Configures
 

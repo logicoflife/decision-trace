@@ -37,9 +37,9 @@ Add the Spring Boot starter and point it at a collector. The endpoint below is a
 
 ```xml
 <dependency>
-    <groupId>io.decisiontrace</groupId>
+    <groupId>io.github.logicoflife.decisiontrace</groupId>
     <artifactId>decision-trace-spring-boot-starter</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>0.1.0</version>
 </dependency>
 ```
 
@@ -116,6 +116,7 @@ See [**Architecture**](docs/architecture.md) for deep dive.
 - [**Java Runtime Architecture**](docs/java-runtime-architecture.md) - Async runtime and fail-open guarantees.
 - [**Java Golden Flow Walkthrough**](docs/java-golden-flow-walkthrough.md) - Auth/risk/passkey sample flow.
 - [**OTel Mapping Notes**](docs/otel-mapping-notes.md) - Canonical event to span projection.
+- [**Release Guide**](docs/releasing.md) - PyPI and Maven Central publishing setup.
 
 ### Examples
 

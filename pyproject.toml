@@ -1,22 +1,26 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "decision-trace"
 version = "0.1.0"
 description = "Decision Trace v1 SDK"
-readme = "README.md"
+readme = { file = "sdk/python/README.md", content-type = "text/markdown" }
 requires-python = ">=3.10"
-license = "MIT"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
 dependencies = ["pydantic>=2.0", "jsonschema>=4.0", "PyYAML>=6.0", "opentelemetry-api>=1.20", "opentelemetry-sdk>=1.20"]
 authors = [
     { name = "Decision Trace contributors" },
 ]
+maintainers = [
+    { name = "Shobha Sethuraman" },
+]
+keywords = ["decision-trace", "telemetry", "audit", "observability", "governance"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -30,10 +34,10 @@ test = ["pytest>=7.0", "fastapi>=0.110", "httpx>=0.24"]
 collector = ["fastapi>=0.110", "uvicorn>=0.23"]
 
 [project.urls]
-Homepage = "https://github.com/decision-trace/decision-trace"
-Repository = "https://github.com/decision-trace/decision-trace"
-Issues = "https://github.com/decision-trace/decision-trace/issues"
-Documentation = "https://github.com/decision-trace/decision-trace#readme"
+Homepage = "https://github.com/logicoflife/decision-trace"
+Repository = "https://github.com/logicoflife/decision-trace"
+Issues = "https://github.com/logicoflife/decision-trace/issues"
+Documentation = "https://github.com/logicoflife/decision-trace/tree/main/sdk/python"
 
 [project.scripts]
 decision-trace = "decision_trace.cli:main"
